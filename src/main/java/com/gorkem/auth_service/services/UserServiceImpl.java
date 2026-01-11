@@ -1,5 +1,7 @@
 package com.gorkem.auth_service.services;
 
+import com.gorkem.auth_service.dto.UserResponse;
+import com.gorkem.auth_service.dto.UserSaveRequest;
 import com.gorkem.auth_service.entities.Role;
 import com.gorkem.auth_service.entities.User;
 import com.gorkem.auth_service.repos.UserRepository;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -16,36 +19,51 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     @Override
-    public User getOneUser(Long userId) {
-        return userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+    public UserResponse getOneUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return new UserResponse(user.getId(), user.getFirstName(),
+                user.getLastName(), user.getEmail(), user.getRole());
     }
 
     @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream().map(user -> new UserResponse(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getRole())).collect(Collectors.toList());
     }
 
     @Override
-    public User createUser(User newUser) {
-        if(newUser.getRole() == null){
-            newUser.setRole(Role.ROLE_MEMBER);
-        }
-        return userRepository.save(newUser);
+    public UserResponse createUser(UserSaveRequest newUserRequest) {
+        User user = new User();
+        user.setFirstName(newUserRequest.firstName());
+        user.setLastName(newUserRequest.lastName());
+        user.setEmail(newUserRequest.email());
+        user.setPassword(newUserRequest.password()); // Şimdilik ham şifre
+        user.setRole(Role.ROLE_MEMBER); // Varsayılan rol
+
+        User savedUser = userRepository.save(user);
+        return new UserResponse(savedUser.getId(), savedUser.getFirstName(),
+                savedUser.getLastName(), savedUser.getEmail(), savedUser.getRole());
+
     }
 
     @Override
-    public User updateUser(Long userId, User updateUser) {
-        Optional<User> user = userRepository.findById(userId);
-        if (user.isPresent()){
-            User foundUser = user.get();
-            foundUser.setFirstName(updateUser.getFirstName());
-            foundUser.setLastName(updateUser.getLastName());
-            foundUser.setEmail(updateUser.getEmail());
-            foundUser.setPassword(updateUser.getPassword());
-            return userRepository.save(foundUser);
-        } else {
-            return null;
-        }
+    public UserResponse updateUser(Long userId, UserSaveRequest updateUserRequest) {
+        User foundUser = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        foundUser.setFirstName(updateUserRequest.firstName());
+        foundUser.setLastName(updateUserRequest.lastName());
+        foundUser.setEmail(updateUserRequest.email());
+        foundUser.setPassword(updateUserRequest.password());
+
+        User updatedUser = userRepository.save(foundUser);
+        return new UserResponse(updatedUser.getId(), updatedUser.getFirstName(), updatedUser.getLastName(), updatedUser.getEmail(), updatedUser.getRole());
     }
 
     @Override

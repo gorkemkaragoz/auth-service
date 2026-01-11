@@ -1,5 +1,7 @@
 package com.gorkem.auth_service.controllers;
 
+import com.gorkem.auth_service.dto.UserResponse;
+import com.gorkem.auth_service.dto.UserSaveRequest;
 import com.gorkem.auth_service.entities.User;
 import com.gorkem.auth_service.services.UserService;
 import lombok.RequiredArgsConstructor;
@@ -15,23 +17,23 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("{userId}")
-    public User getOneUser(@PathVariable Long userId){
+    public UserResponse getOneUser(@PathVariable Long userId){
         return userService.getOneUser(userId);
     }
 
     @GetMapping
-    public List<User> getAllUsers(){
+    public List<UserResponse> getAllUsers(){
         return userService.getAllUsers();
     }
 
     @PostMapping
-    public User createUser(@RequestBody User newUser){
-        return userService.createUser(newUser);
+    public UserResponse createUser(@RequestBody UserSaveRequest newUserRequest){
+        return userService.createUser(newUserRequest);
     }
 
     @PutMapping("{userId}")
-    public User updateUser(@PathVariable Long userId, @RequestBody User updateUser){
-        return userService.updateUser(userId,updateUser);
+    public UserResponse updateUser(@PathVariable Long userId, @RequestBody UserSaveRequest updateUserRequest){
+        return userService.updateUser(userId,updateUserRequest);
     }
 
     @DeleteMapping("{userId}")
