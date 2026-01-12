@@ -45,7 +45,6 @@ public class UserServiceImpl implements UserService {
         user.setLastName(newUserRequest.lastName());
         user.setEmail(newUserRequest.email());
 
-        // Şifreyi veritabanına gitmeden önce maskeliyoruz!
         user.setPassword(passwordEncoder.encode(newUserRequest.password()));
 
         user.setRole(Role.ROLE_MEMBER); // Varsayılan rol
@@ -69,7 +68,6 @@ public class UserServiceImpl implements UserService {
         foundUser.setLastName(updateUserRequest.lastName());
         foundUser.setEmail(updateUserRequest.email());
 
-        // Güncelleme yaparken de şifreyi maskelemeyi unutmuyoruz
         foundUser.setPassword(passwordEncoder.encode(updateUserRequest.password()));
 
         User updatedUser = userRepository.save(foundUser);

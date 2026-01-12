@@ -3,6 +3,8 @@ package com.gorkem.auth_service.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
 @Data
@@ -20,6 +22,9 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    private String otpCode;
+    private LocalDateTime otpExpiry;
 
     @Column(updatable = false)
     @Enumerated(EnumType.STRING)

@@ -11,6 +11,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.Random;
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -19,6 +22,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final MailService mailService;
 
     @Override
     public UserResponse register(AuthRegisterRequest request) {
@@ -63,5 +67,46 @@ public class AuthServiceImpl implements AuthService {
                 user.getRole()
         );
 
+    }
+
+    @Override
+    public void forgotPassword(ForgotPasswordRequest request) {
+        // 1. Kullanıcı var mı kontrol et
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new RuntimeException("Bu email ile kayıtlı kullanıcı bulunamadı!"));
+
+        // 2. 6 haneli kod üret ve süre ata
+        String otp = String.valueOf(new Random().nextInt(900000) + 100000);
+        user.setOtpCode(otp);
+        user.setOtpExpiry(LocalDateTime.now().plusMinutes(5)); //
+
+        userRepository.save(user);
+
+        // 3. Maili gönder
+        try {
+            mailService.sendOtpMail(user.getEmail(), otp);
+        } catch (Exception e) {
+            System.out.println("Mail gönderilemedi ama OTP kaydedildi: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void resetPassword(ResetPasswordRequest request) {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı!"));
+
+        if (user.getOtpCode() == null || !user.getOtpCode().equals(request.otpCode())) {
+            throw new RuntimeException("Geçersiz doğrulama kodu!");
+        }
+
+        if (user.getOtpExpiry().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Kodun süresi dolmuş, Patron!");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.newPassword())); //
+        user.setOtpCode(null);
+        user.setOtpExpiry(null);
+
+        userRepository.save(user);
     }
 }
