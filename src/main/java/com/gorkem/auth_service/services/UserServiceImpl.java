@@ -6,10 +6,10 @@ import com.gorkem.auth_service.entities.Role;
 import com.gorkem.auth_service.entities.User;
 import com.gorkem.auth_service.repos.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserResponse getOneUser(Long userId) {
@@ -43,13 +44,20 @@ public class UserServiceImpl implements UserService {
         user.setFirstName(newUserRequest.firstName());
         user.setLastName(newUserRequest.lastName());
         user.setEmail(newUserRequest.email());
-        user.setPassword(newUserRequest.password()); // Şimdilik ham şifre
+
+        // Şifreyi veritabanına gitmeden önce maskeliyoruz!
+        user.setPassword(passwordEncoder.encode(newUserRequest.password()));
+
         user.setRole(Role.ROLE_MEMBER); // Varsayılan rol
 
         User savedUser = userRepository.save(user);
-        return new UserResponse(savedUser.getId(), savedUser.getFirstName(),
-                savedUser.getLastName(), savedUser.getEmail(), savedUser.getRole());
-
+        return new UserResponse(
+                savedUser.getId(),
+                savedUser.getFirstName(),
+                savedUser.getLastName(),
+                savedUser.getEmail(),
+                savedUser.getRole()
+        );
     }
 
     @Override
@@ -60,10 +68,18 @@ public class UserServiceImpl implements UserService {
         foundUser.setFirstName(updateUserRequest.firstName());
         foundUser.setLastName(updateUserRequest.lastName());
         foundUser.setEmail(updateUserRequest.email());
-        foundUser.setPassword(updateUserRequest.password());
+
+        // Güncelleme yaparken de şifreyi maskelemeyi unutmuyoruz
+        foundUser.setPassword(passwordEncoder.encode(updateUserRequest.password()));
 
         User updatedUser = userRepository.save(foundUser);
-        return new UserResponse(updatedUser.getId(), updatedUser.getFirstName(), updatedUser.getLastName(), updatedUser.getEmail(), updatedUser.getRole());
+        return new UserResponse(
+                updatedUser.getId(),
+                updatedUser.getFirstName(),
+                updatedUser.getLastName(),
+                updatedUser.getEmail(),
+                updatedUser.getRole()
+        );
     }
 
     @Override
