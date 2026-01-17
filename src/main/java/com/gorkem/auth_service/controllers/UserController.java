@@ -2,7 +2,6 @@ package com.gorkem.auth_service.controllers;
 
 import com.gorkem.auth_service.dto.UserResponse;
 import com.gorkem.auth_service.dto.UserSaveRequest;
-import com.gorkem.auth_service.entities.User;
 import com.gorkem.auth_service.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
